@@ -332,7 +332,7 @@ function hyperpay_init_gateway_class()
                         $failed_msg = $resultJson['result']['description'];
 
                         if (isset($resultJson['card']['bin']) && $resultJson['result']['code'] == '800.300.401') {
-                            $blackBins = require_once('includes/blackBins.php');
+                            $blackBins = require('includes/blackBins.php');
                             $searchBin = $resultJson['card']['bin'];
                             if (in_array($searchBin, $blackBins)) {
                                 if ($this->lang == 'ar') {
