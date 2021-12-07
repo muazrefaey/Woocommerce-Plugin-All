@@ -3,7 +3,7 @@
   Plugin Name: Hyperpay Payment Gateway plugin for WooCommerce
   Plugin URI:
   Description: Hyperpay is the first one stop-shop service company for online merchants in MENA Region.<strong>If you have any question, please <a href="http://www.hyperpay.com/" target="_new">contact Hyperpay</a>.</strong>
-  Version: 1.6
+  Version: 1.6.2
   Author: Hyperpay Team
   Ported to Oppwa By : Hyperpay Team
 
@@ -778,7 +778,7 @@ function hyperpay_init_gateway_class()
                     //fail case
                     $failed_msg = $payment['result']['description'];
                     if (isset($payment['card']['bin']) && $payment['result']['code'] == '800.300.401') {
-                        $blackBins = require_once('includes/blackBins.php');
+                        $blackBins = require('includes/blackBins.php');
                         $searchBin = $payment['card']['bin'];
                         if (in_array($searchBin, $blackBins)) {
                             if ($this->lang == 'ar') {
