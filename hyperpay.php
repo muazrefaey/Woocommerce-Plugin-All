@@ -3,15 +3,17 @@
   Plugin Name: Hyperpay Payment Gateway plugin for WooCommerce
   Plugin URI:
   Description: Hyperpay is the first one stop-shop service company for online merchants in MENA Region.<strong>If you have any question, please <a href="http://www.hyperpay.com/" target="_new">contact Hyperpay</a>.</strong>
-  Version: 1.6.2
+  Version: 1.6
   Author: Hyperpay Team
   Ported to Oppwa By : Hyperpay Team
 
  */
 
+
 add_filter('woocommerce_payment_gateways', 'hyperpay_add_gateway_class');
 function hyperpay_add_gateway_class($gateways)
 {
+
     $gateways[] = 'WC_Hyperpay_Gateway'; // your class name is here
     return $gateways;
 }
@@ -20,6 +22,7 @@ register_activation_hook(__FILE__, 'install');
 
 function install()
 {
+
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
     global $wpdb;
@@ -42,11 +45,14 @@ function hyperpay_init_gateway_class()
 
     class WC_Hyperpay_Gateway extends WC_Payment_Gateway
     {
+
         protected $msg = array();
         protected $is_registered_user = false; // If the user is not a registerd user then no need to store the card.
+        protected $blackBins = array();
 
         public function __construct()
         {
+            $this->blackBins= require_once('includes/blackBins.php');
             $this->id = 'hyperpay';
             $this->has_fields = false;
             $this->method_title = 'Hyperpay Gateway';
@@ -62,7 +68,7 @@ function hyperpay_init_gateway_class()
             $this->token_url_test = "https://test.oppwa.com/v1/checkouts";
             $this->transaction_status_url_test = "https://test.oppwa.com/v1/checkouts/##TOKEN##/payment";
             $this->query_url_test = "https://test.oppwa.com/v1/query";
-            $this->query_url= "https://oppwa.com/v1/query";
+            $this->query_url = "https://oppwa.com/v1/query";
 
             $this->testmode = $this->settings['testmode'];
             $this->title = $this->settings['title'];
@@ -332,9 +338,8 @@ function hyperpay_init_gateway_class()
                         $failed_msg = $resultJson['result']['description'];
 
                         if (isset($resultJson['card']['bin']) && $resultJson['result']['code'] == '800.300.401') {
-                            $blackBins = require('includes/blackBins.php');
                             $searchBin = $resultJson['card']['bin'];
-                            if (in_array($searchBin, $blackBins)) {
+                            if (in_array($searchBin, $this->blackBins)) {
                                 if ($this->lang == 'ar') {
                                     $failed_msg = 'عذرا! يرجى اختيار خيار الدفع "مدى" لإتمام عملية الشراء بنجاح.';
                                 } else {
@@ -419,7 +424,7 @@ function hyperpay_init_gateway_class()
                                 $queryResponse = $this->queryTransactionReport($_GET['hpOrderId'], $this->entityid, $this->accesstoken);
                                 $queryResponse = json_decode($queryResponse, true);
                                 $this->processQueryResult($queryResponse, $order);
-                            }else{
+                            } else {
                                 $order->add_order_note($this->failed_message . $failed_msg);
                                 $order->update_status('cancelled');
 
@@ -437,7 +442,7 @@ function hyperpay_init_gateway_class()
                             $queryResponse = $this->queryTransactionReport($_GET['hpOrderId'], $this->entityid, $this->accesstoken);
                             $queryResponse = json_decode($queryResponse, true);
                             $this->processQueryResult($queryResponse, $order);
-                        }else{
+                        } else {
                             $order->add_order_note($this->failed_message);
                             $order->update_status('cancelled');
                             if ($this->lang == 'ar') {
@@ -454,7 +459,7 @@ function hyperpay_init_gateway_class()
                         $queryResponse = $this->queryTransactionReport($_GET['hpOrderId'], $this->entityid, $this->accesstoken);
                         $queryResponse = json_decode($queryResponse, true);
                         $this->processQueryResult($queryResponse, $order);
-                    }else{
+                    } else {
                         $order->add_order_note($this->failed_message);
                         $order->update_status('cancelled');
 
@@ -778,9 +783,8 @@ function hyperpay_init_gateway_class()
                     //fail case
                     $failed_msg = $payment['result']['description'];
                     if (isset($payment['card']['bin']) && $payment['result']['code'] == '800.300.401') {
-                        $blackBins = require('includes/blackBins.php');
                         $searchBin = $payment['card']['bin'];
-                        if (in_array($searchBin, $blackBins)) {
+                        if (in_array($searchBin, $this->blackBins)) {
                             if ($this->lang == 'ar') {
                                 $failed_msg = 'عذرا! يرجى اختيار خيار الدفع "مدى" لإتمام عملية الشراء بنجاح.';
                             } else {
