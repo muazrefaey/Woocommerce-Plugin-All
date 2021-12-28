@@ -61,6 +61,8 @@ function hyperpayapplepay_init_gateway_class()
             $lang = $lang[0];
             $this->lang  = $lang;
 
+            $this->order_status = $this->settings['order_status'];
+
             $this->redirect_page_id = $this->settings['redirect_page_id'];
             //$this->description = ' ';
 
@@ -196,9 +198,28 @@ function hyperpayapplepay_init_gateway_class()
                     'type' => 'select',
                     'options' => $this->get_pages('Select Page'),
                     'description' => "URL of success page"
+                ),
+                'order_status' => array(
+                    'title' => __('Status Of Order'),
+                    'type' => 'select',
+                    'options' => $this->get_order_status(),
+                    'description' => "select order status after success transaction."
                 )
             );
         }
+
+        function get_order_status()
+        {
+            $order_status = array(
+
+                'processing' => 'Processing',
+                'completed' => 'Completed'
+            );
+
+            return $order_status;
+        }
+
+
 
         function get_hyperpayApplePay_trans_type()
         {
@@ -340,7 +361,7 @@ function hyperpayapplepay_init_gateway_class()
                         if ($sccuess == 1) {
                             WC()->session->set('hp_payment_retry', 0);
                             if ($order->status != 'completed') {
-                                $order->payment_complete();
+                                $order->update_status($this->order_status);
                                 $woocommerce->cart->empty_cart();
 
 
@@ -430,7 +451,7 @@ function hyperpayapplepay_init_gateway_class()
                 $postbackURL = $order->get_checkout_payment_url(true);
 
                 $country_code = '';
-                if(isset($this->country_code) && !empty($this->country_code != '')){
+                if(!empty($this->country_cod)){
                     $country_code = ' countryCode: "'.$this->country_code . '",';
                 }
 
