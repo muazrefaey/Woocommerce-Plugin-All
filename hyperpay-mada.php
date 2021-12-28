@@ -40,6 +40,7 @@ add_action('plugins_loaded', 'hyperpay_mada_init_gateway_class');
 function hyperpay_mada_init_gateway_class()
 {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
     class WC_Hyperpay_Mada_Gateway extends WC_Payment_Gateway
     {
         protected $msg = array();
@@ -75,11 +76,13 @@ function hyperpay_mada_init_gateway_class()
             $this->mailerrors = $this->settings['mailerrors'];
             $this->lang = $this->settings['lang'];
             $this->query_url_test = "https://test.oppwa.com/v1/query";
-            $this->query_url= "https://oppwa.com/v1/query";
+            $this->query_url = "https://oppwa.com/v1/query";
 
             $lang = explode('-', get_bloginfo('language'));
             $lang = $lang[0];
-            $this->lang  = $lang;
+            $this->lang = $lang;
+
+            $this->order_status = $this->settings['order_status'];
 
             $this->redirect_page_id = $this->settings['redirect_page_id'];
             //$this->description = ' ';
@@ -101,15 +104,15 @@ function hyperpay_mada_init_gateway_class()
             $this->msg['class'] = "";
 
             // adding icon next gateway name in the checkout and change name based on lang using jQuery
-            add_filter( 'woocommerce_gateway_icon',  function ( $icon, $id ){
+            add_filter('woocommerce_gateway_icon', function ($icon, $id) {
                 $icon_path = plugins_url('images/mada-logo.png', __FILE__);
                 $margin_style = '';
-                if($id === 'hyperpay_mada') {
-                    $icon = '<img id="woocommerce_gateway_icon_mada_hp" src="' . $icon_path . '" alt="Mada" style="'. $margin_style .'width: 60px;height: 25px" width="60" height="25">';
+                if ($id === 'hyperpay_mada') {
+                    $icon = '<img id="woocommerce_gateway_icon_mada_hp" src="' . $icon_path . '" alt="Mada" style="' . $margin_style . 'width: 60px;height: 25px" width="60" height="25">';
                 }
-                
+
                 $icon .= '<script> 
-                var lang = "'. $this->lang .'";
+                var lang = "' . $this->lang . '";
                 var title = "mada debit card";
                 if(lang == "ar"){
                     title = "بطاقة مدى البنكية"
@@ -119,22 +122,22 @@ function hyperpay_mada_init_gateway_class()
                 jQuery(".payment_method_hyperpay_mada").prependTo(".wc_payment_methods");
                 </script>';
                 return $icon;
-            }, 10, 2 );
+            }, 10, 2);
 
             add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
             add_action('woocommerce_receipt_hyperpay_mada', array(&$this, 'receipt_page'));
             // hard-code mada title
-            add_action( 'admin_print_footer_scripts', function () use ($lang) {
-              ?>
-              <script type="text/javascript">
-              jQuery(function ($) {
-                var lang = '<?php echo $lang; ?>';
-                var title = ( lang === 'ar' ? "بطاقة مدى البنكية" :'mada debit card');
-                $("#woocommerce_hyperpay_mada_title").val(title);
-              });
-              </script>`;
-              <?php
-          }, 50 );
+            add_action('admin_print_footer_scripts', function () use ($lang) {
+                ?>
+                <script type="text/javascript">
+                    jQuery(function ($) {
+                        var lang = '<?php echo $lang; ?>';
+                        var title = (lang === 'ar' ? "بطاقة مدى البنكية" : 'mada debit card');
+                        $("#woocommerce_hyperpay_mada_title").val(title);
+                    });
+                </script>`;
+                <?php
+            }, 50);
         }
 
         public function init_form_fields()
@@ -229,8 +232,25 @@ function hyperpay_mada_init_gateway_class()
                     'type' => 'select',
                     'options' => $this->get_pages('Select Page'),
                     'description' => "URL of success page"
+                ),
+                'order_status' => array(
+                    'title' => __('Status Of Order'),
+                    'type' => 'select',
+                    'options' => $this->get_order_status(),
+                    'description' => "select order status after success transaction."
                 )
             );
+        }
+
+        function get_order_status()
+        {
+            $order_status = array(
+
+                'processing' => 'Processing',
+                'completed' => 'Completed'
+            );
+
+            return $order_status;
         }
 
         function get_hyperpay_mada_trans_type()
@@ -389,7 +409,7 @@ function hyperpay_mada_init_gateway_class()
                                 $queryResponse = $this->queryTransactionReport($_GET['hpOrderId'], $this->entityid, $this->accesstoken);
                                 $queryResponse = json_decode($queryResponse, true);
                                 $this->processQueryResult($queryResponse, $order);
-                            }else{
+                            } else {
                                 $order->add_order_note($this->failed_message . $failed_msg);
                                 $order->update_status('cancelled');
 
@@ -408,7 +428,7 @@ function hyperpay_mada_init_gateway_class()
                             $queryResponse = $this->queryTransactionReport($_GET['hpOrderId'], $this->entityid, $this->accesstoken);
                             $queryResponse = json_decode($queryResponse, true);
                             $this->processQueryResult($queryResponse, $order);
-                        }else{
+                        } else {
                             $order->add_order_note($this->failed_message);
                             $order->update_status('cancelled');
                             if ($this->lang == 'ar') {
@@ -425,7 +445,7 @@ function hyperpay_mada_init_gateway_class()
                         $queryResponse = $this->queryTransactionReport($_GET['hpOrderId'], $this->entityid, $this->accesstoken);
                         $queryResponse = json_decode($queryResponse, true);
                         $this->processQueryResult($queryResponse, $order);
-                    }else{
+                    } else {
                         $order->add_order_note($this->failed_message);
                         $order->update_status('cancelled');
 
@@ -463,7 +483,7 @@ function hyperpay_mada_init_gateway_class()
 
                 if ($this->tokenization == 'enable') {
 
-                    $registration =  'var storeMsg = \'Store payment details?\';
+                    $registration = 'var storeMsg = \'Store payment details?\';
                     var style = \'style="direction: ltr"\';
                     if (wpwlOptions.locale == "ar") {
                         storeMsg = \' هل تريد حفظ معلومات البطاقة ؟\';
@@ -544,7 +564,7 @@ function hyperpay_mada_init_gateway_class()
 
                 // payment form
                 echo '<script  src="' . $scriptURL . '"></script>';
-                echo '<form action="' . $postbackURL . '" class="paymentWidgets" data-brands="'. $payment_brands .'">
+                echo '<form action="' . $postbackURL . '" class="paymentWidgets" data-brands="' . $payment_brands . '">
                         </form>';
             }
         }
@@ -757,7 +777,7 @@ function hyperpay_mada_init_gateway_class()
 
                 if ($success) {
                     if ($order->status != 'completed') {
-                        $order->payment_complete();
+                        $order->update_status($this->order_status);
                         $woocommerce->cart->empty_cart();
                         $uniqueId = $payment['id'];
                         $order->add_order_note($this->success_message . 'Transaction ID: ' . $uniqueId);
