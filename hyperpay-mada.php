@@ -360,7 +360,7 @@ function hyperpay_mada_init_gateway_class()
                         if ($sccuess == 1) {
                             WC()->session->set('hp_payment_retry', 0);
                             if ($order->status != 'completed') {
-                                $order->payment_complete();
+                                $order->update_status($this->order_status);
                                 $woocommerce->cart->empty_cart();
 
 
