@@ -670,7 +670,7 @@ function hyperpayapplepay_init_gateway_class()
 
                 if ($success) {
                     if ($order->status != 'completed') {
-                        $order->payment_complete();
+                        $order->update_status($this->order_status);
                         $woocommerce->cart->empty_cart();
                         $uniqueId = $payment['id'];
                         $order->add_order_note($this->success_message . 'Transaction ID: ' . $uniqueId);
