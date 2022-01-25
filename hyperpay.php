@@ -116,7 +116,7 @@ function hyperpay_init_gateway_class()
                         $icon_path = plugins_url('images/' . $brand . '-logo.png', __FILE__);
                         $margin_style = ''; // css style
                         $logoID = 'woocommerce_gateway_icon_' . $brand . '_hp';
-                        $icon .= '<img id="' . $logoID . '" src="' . $icon_path . '" alt="' . $brand . '" style="' . $margin_style . 'width: 70px;height: 85px">';
+                        $icon .= '<img id="' . $logoID . '" src="' . $icon_path . '" alt="' . $brand . '" style="' . $margin_style . 'width: 70px;height: auto">';
 
                         $icon .= '<script> 
                     if(jQuery("#' . $logoID . '").length == 0) {
